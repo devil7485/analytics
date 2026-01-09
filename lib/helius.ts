@@ -28,7 +28,7 @@ export class HeliusClient {
       console.log(`Starting to fetch transaction history (max: ${maxTransactions})...`);
 
       while (hasMore && allTransactions.length < maxTransactions) {
-        const url = beforeSignature
+        const url: string = beforeSignature
           ? `${HELIUS_API_URL}/v0/addresses/${mint}/transactions?api-key=${this.apiKey}&before=${beforeSignature}`
           : `${HELIUS_API_URL}/v0/addresses/${mint}/transactions?api-key=${this.apiKey}`;
 
