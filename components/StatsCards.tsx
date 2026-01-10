@@ -1,7 +1,5 @@
-'use client';
-
 import { TokenAnalytics } from '@/types';
-import { TrendingUp, TrendingDown, Users, Activity, Target, Award, Zap } from 'lucide-react';
+import { Users, Activity, TrendingUp, TrendingDown, Zap, Droplets } from 'lucide-react';
 
 interface StatsCardsProps {
   analytics: TokenAnalytics;
@@ -10,95 +8,79 @@ interface StatsCardsProps {
 export default function StatsCards({ analytics }: StatsCardsProps) {
   const stats = [
     {
+      icon: Users,
       label: 'Total Traders',
       value: analytics.totalTraders.toLocaleString(),
-      icon: Users,
       gradient: 'from-blue-500 to-cyan-500',
-      description: 'Unique wallets',
     },
     {
+      icon: Activity,
       label: 'Total Trades',
       value: analytics.totalTrades.toLocaleString(),
-      icon: Activity,
       gradient: 'from-purple-500 to-pink-500',
-      description: 'Swap transactions',
     },
     {
+      icon: TrendingUp,
       label: 'Highest Price',
       value: `${analytics.highestPrice.toFixed(9)} SOL`,
-      icon: TrendingUp,
       gradient: 'from-green-500 to-emerald-500',
-      description: 'All-time high',
     },
     {
+      icon: TrendingDown,
       label: 'Lowest Price',
       value: `${analytics.lowestPrice.toFixed(9)} SOL`,
-      icon: TrendingDown,
       gradient: 'from-red-500 to-orange-500',
-      description: 'All-time low',
     },
   ];
 
-  // Add DexScreener stats if available
+  // Add DexScreener stats
   if (analytics.dexData) {
-    stats.push({
-      label: '24h Volume',
-      value: `$${(analytics.dexData.volume24h / 1000).toFixed(1)}K`,
-      icon: Activity,
-      gradient: 'from-indigo-500 to-purple-500',
-      description: `${analytics.dexData.priceChange24h > 0 ? '+' : ''}${analytics.dexData.priceChange24h.toFixed(2)}%`,
-    });
+    const volume24h = analytics.dexData.volume24h;
+    const displayVolume = volume24h >= 1000000 
+      ? `$${(volume24h / 1000000).toFixed(2)}M` 
+      : `$${(volume24h / 1000).toFixed(1)}K`;
 
     stats.push({
-      label: '24h Trades',
-      value: `${analytics.dexData.buys24h + analytics.dexData.sells24h}`,
       icon: Zap,
+      label: '24h Volume',
+      value: displayVolume,
       gradient: 'from-yellow-500 to-amber-500',
-      description: `${analytics.dexData.buys24h}B / ${analytics.dexData.sells24h}S`,
     });
 
     if (analytics.dexData.liquidity > 0) {
+      const liquidity = analytics.dexData.liquidity;
+      const displayLiquidity = liquidity >= 1000000 
+        ? `$${(liquidity / 1000000).toFixed(2)}M` 
+        : `$${(liquidity / 1000).toFixed(1)}K`;
+
       stats.push({
+        icon: Droplets,
         label: 'Liquidity',
-        value: `$${(analytics.dexData.liquidity / 1000).toFixed(1)}K`,
-        icon: Target,
-        gradient: 'from-teal-500 to-green-500',
-        description: 'Total liquidity',
+        value: displayLiquidity,
+        gradient: 'from-teal-500 to-cyan-500',
       });
     }
   }
 
-  if (analytics.currentPrice && !analytics.dexData) {
-    stats.push({
-      label: 'Current Price',
-      value: `${analytics.currentPrice.toFixed(9)} SOL`,
-      icon: Zap,
-      gradient: 'from-yellow-500 to-amber-500',
-      description: 'Latest trade',
-    });
-  }
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 slide-in-right">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
           <div
-            key={stat.label}
-            className="glass rounded-xl p-5 border border-white/10 hover:border-white/20 transition-all duration-300 group"
-            style={{
-              animationDelay: `${index * 0.1}s`,
-            }}
+            key={index}
+            className="glass glass-hover rounded-2xl p-6 group"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className={`p-2.5 rounded-lg bg-gradient-to-br ${stat.gradient} opacity-90 group-hover:opacity-100 transition-opacity`}>
-                <Icon className="w-5 h-5 text-white" />
+            <div className="flex items-start justify-between mb-4">
+              <div className={`p-3 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg`}>
+                <Icon className="w-6 h-6 text-white" />
               </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs text-slate-400 uppercase tracking-wide">{stat.label}</p>
-              <p className="text-xl font-bold text-white font-mono">{stat.value}</p>
-              <p className="text-xs text-slate-500">{stat.description}</p>
+            <div className="text-3xl font-bold mb-1 font-syne">
+              {stat.value}
+            </div>
+            <div className="text-slate-400 text-sm uppercase tracking-wider">
+              {stat.label}
             </div>
           </div>
         );

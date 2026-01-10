@@ -1,24 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { TokenAnalytics } from '@/types';
 import SearchBar from '@/components/SearchBar';
 import TokenHeader from '@/components/TokenHeader';
 import StatsCards from '@/components/StatsCards';
 import WalletInsights from '@/components/WalletInsights';
 import PriceChart from '@/components/PriceChart';
-import { Sparkles, AlertCircle, Clock, Database } from 'lucide-react';
+import { TokenAnalytics } from '@/types';
 
 export default function Home() {
   const [analytics, setAnalytics] = useState<TokenAnalytics | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isCached, setIsCached] = useState(false);
 
   const handleSearch = async (mint: string) => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
-    setAnalytics(null);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -31,137 +28,114 @@ export default function Home() {
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!data.success) {
         throw new Error(data.error || 'Failed to analyze token');
       }
 
-      if (data.success && data.data) {
-        setAnalytics(data.data);
-        setIsCached(data.cached || false);
-      } else {
-        throw new Error('Invalid response from server');
-      }
+      setAnalytics(data.data);
     } catch (err: any) {
-      setError(err.message || 'An error occurred while analyzing the token');
-      console.error('Analysis error:', err);
+      setError(err.message);
+      setAnalytics(null);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl float" style={{ animationDelay: '0s' }}></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl float" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl float" style={{ animationDelay: '4s' }}></div>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-12">
-        {/* Header */}
-        <header className="text-center mb-16 fade-in">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-full mb-6">
-            <Sparkles className="w-4 h-4 text-blue-400" />
-            <span className="text-sm text-blue-300 font-mono">Powered by Helius & Solana</span>
-          </div>
-          <h1 className="text-6xl md:text-7xl font-black mb-4 gradient-text" style={{ fontFamily: 'var(--font-display)' }}>
-            Memecoin Analytics
-          </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-            Deep on-chain intelligence for Solana memecoins. Discover top traders, analyze positions, and track price movements.
-          </p>
-        </header>
-
-        {/* Search */}
-        <div className="mb-16">
-          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+    <main className="min-h-screen">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        {/* Animated background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute top-40 left-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '4s' }}></div>
         </div>
 
-        {/* Loading state */}
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-20 fade-in">
-            <div className="relative">
-              <div className="spinner w-16 h-16 border-4"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Database className="w-6 h-6 text-blue-400 animate-pulse" />
-              </div>
-            </div>
-            <p className="mt-6 text-slate-400 text-lg">Analyzing on-chain data...</p>
-            <p className="mt-2 text-slate-500 text-sm">This may take a few seconds</p>
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && !isLoading && (
-          <div className="max-w-2xl mx-auto fade-in">
-            <div className="glass rounded-2xl p-8 border border-red-500/30 bg-red-500/5">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-red-500/20 rounded-xl">
-                  <AlertCircle className="w-6 h-6 text-red-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-white mb-2">Analysis Failed</h3>
-                  <p className="text-slate-300">{error}</p>
-                  <p className="mt-3 text-sm text-slate-400">
-                    Please check the token address and try again. Make sure the token has trading history on Solana.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Results */}
-        {analytics && !isLoading && (
-          <div className="space-y-8">
-            {/* Cache indicator */}
-            {isCached && (
-              <div className="flex items-center justify-center gap-2 text-sm text-green-400">
-                <Clock className="w-4 h-4" />
-                <span>Loaded from cache • Updated {new Date(analytics.lastUpdated).toLocaleString()}</span>
-              </div>
-            )}
-
-            {/* Token header */}
-            <TokenHeader metadata={analytics.metadata} />
-
-            {/* Stats cards */}
-            <StatsCards analytics={analytics} />
-
-            {/* Wallet insights */}
-            <WalletInsights
-              topBuyer={analytics.topBuyer}
-              mostProfitable={analytics.mostProfitable}
-              biggestLoser={analytics.biggestLoser}
-            />
-
-            {/* Price chart */}
-            {analytics.priceHistory.length > 0 && (
-              <PriceChart priceHistory={analytics.priceHistory} />
-            )}
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!analytics && !isLoading && !error && (
-          <div className="text-center py-20 fade-in">
-            <div className="inline-flex p-6 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl border border-white/10 mb-6">
-              <Sparkles className="w-12 h-12 text-blue-400" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-3">Ready to analyze</h2>
-            <p className="text-slate-400 max-w-md mx-auto">
-              Enter a Solana token mint address above to get started with comprehensive on-chain analytics.
+        <div className="container mx-auto px-4 py-12 md:py-20 relative">
+          {/* Header */}
+          <div className="text-center mb-12 md:mb-16">
+            <h1 className="font-syne text-5xl md:text-7xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+              Solana Memecoin Analytics
+            </h1>
+            <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto">
+              Discover top traders, analyze trading patterns, and find the next gem
             </p>
           </div>
-        )}
+
+          {/* Search Bar */}
+          <div className="max-w-3xl mx-auto mb-16">
+            <SearchBar onSearch={handleSearch} loading={loading} />
+          </div>
+
+          {/* Error State */}
+          {error && (
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="glass border-red-500/20 rounded-2xl p-6">
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl">⚠️</div>
+                  <div>
+                    <h3 className="font-semibold text-red-400 mb-1">Error</h3>
+                    <p className="text-slate-300">{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="glass rounded-2xl p-12 text-center">
+                <div className="inline-block w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                <p className="text-slate-300 text-lg">Analyzing token...</p>
+                <p className="text-slate-500 text-sm mt-2">This may take 10-30 seconds</p>
+              </div>
+            </div>
+          )}
+
+          {/* Results */}
+          {analytics && !loading && (
+            <div className="max-w-7xl mx-auto space-y-8">
+              {/* Token Header */}
+              <div className="glass glass-hover rounded-2xl p-6 md:p-8">
+                <TokenHeader analytics={analytics} />
+              </div>
+
+              {/* Stats Grid */}
+              <StatsCards analytics={analytics} />
+
+              {/* Wallet Insights */}
+              <WalletInsights analytics={analytics} />
+
+              {/* Price Chart */}
+              {analytics.priceHistory && analytics.priceHistory.length > 0 && (
+                <div className="glass glass-hover rounded-2xl p-6 md:p-8">
+                  <h2 className="font-syne text-2xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    Price History
+                  </h2>
+                  <PriceChart data={analytics.priceHistory} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!analytics && !loading && !error && (
+            <div className="max-w-3xl mx-auto">
+              <div className="glass rounded-2xl p-12 text-center">
+                <div className="text-6xl mb-4 animate-float">🚀</div>
+                <h3 className="font-syne text-2xl font-bold mb-2">Ready to analyze</h3>
+                <p className="text-slate-400">Enter a Solana token address above to get started</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center py-8 text-slate-500 text-sm border-t border-white/5 mt-20">
-        <p>Built with Next.js, TypeScript & Helius API</p>
-        <p className="mt-2">Read-only analytics • No wallet connection required</p>
+      <footer className="container mx-auto px-4 py-8 text-center text-slate-500 text-sm">
+        <p>Powered by Helius, DexScreener & Birdeye APIs</p>
       </footer>
     </main>
   );
